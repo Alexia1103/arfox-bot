@@ -1,5 +1,8 @@
+import os
 import os.path
 import base64
+import json              # <-- IMPORTAR JSON
+import re
 from datetime import datetime
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -10,12 +13,13 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 def obtener_servicio_gmail():
     creds = None
+
     # Cargar token desde variable de entorno
     token_json = os.environ.get("GMAIL_TOKEN_JSON")
     if token_json:
         creds = Credentials.from_authorized_user_info(json.loads(token_json), SCOPES)
 
-    # Cargar credenciales desde variable de entorno si no hay token
+    # Si no hay token válido, usar credenciales de entorno
     if not creds or not creds.valid:
         creds_env = os.environ.get("GMAIL_CREDENTIALS_JSON")
         if creds_env:
@@ -24,19 +28,23 @@ def obtener_servicio_gmail():
             )
             creds = flow.run_local_server(port=0)
 
-        # Si refresca, se puede guardar de nuevo (opcional)
+        # Opcional: guardar token para uso futuro
         if creds and creds.valid:
             token_data = creds.to_json()
-            # En local podrías guardar a un archivo si quieres
-            # with open("token.json","w") as f: f.write(token_data)
+            # Solo local; en Render no es necesario
+            # with open("token.json", "w") as f:
+            #     f.write(token_data)
 
     service = build("gmail", "v1", credentials=creds)
     return service
 
 def obtener_correos_netflix(destinatario):
+    """
+    Obtiene todos los correos de Netflix enviados al correo 'destinatario' del día de hoy,
+    manteniendo el HTML completo.
+    """
     service = obtener_servicio_gmail()
     hoy = datetime.now().strftime("%Y/%m/%d")
-    # Filtramos por correos de Netflix enviados a 'destinatario'
     query = f"from:@netflix.com to:{destinatario} after:{hoy}"
 
     resultados = service.users().messages().list(
@@ -60,7 +68,7 @@ def obtener_correos_netflix(destinatario):
         subject = next((h["value"] for h in headers if h["name"]=="Subject"), "")
         from_email = next((h["value"] for h in headers if h["name"]=="From"), "")
 
-        # Obtenemos el cuerpo en HTML si existe
+        # Cuerpo HTML
         cuerpo = ""
         if "parts" in payload:
             for part in payload["parts"]:
@@ -70,7 +78,6 @@ def obtener_correos_netflix(destinatario):
             cuerpo = base64.urlsafe_b64decode(payload.get("body", {}).get("data", b"")).decode("utf-8")
 
         # Extraemos código de 6 dígitos si aparece
-        import re
         match = re.search(r"\b\d{6}\b", cuerpo)
         codigo = match.group(0) if match else None
 
