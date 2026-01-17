@@ -1,0 +1,91 @@
+/* FONDO GENERAL */
+body.fondo-oscuro {
+  margin: 0;
+  background: #0b0f1a;
+  display: flex;
+  justify-content: center; /* CENTRA TODO */
+  color:white;
+}
+
+/* ESTE ES EL SECRETO DEL CENTRADO */
+.app-container {
+  width: 100%;
+  max-width: 420px; /* <-- CLAVE: lo hace más estrecho tipo “app/chat” */
+  margin-top: 40px;
+}
+
+/* HEADER BONITO Y CENTRADO */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+/* ROBOT */
+.robot {
+  width: 60px;
+}
+
+/* TÍTULO */
+.titulo {
+  color: white;
+  font-size: 28px;
+}
+
+/* TARJETA (CARD) */
+.card {
+  background: #111827;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0px 0px 20px rgba(128, 0, 255, 0.3);
+}
+.card>h3{
+    color:white;
+}
+
+/* BOTONES */
+.btn-primary {
+  display: block;
+  width: 100%;
+  background: #6b21a8;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  margin: 10px 0;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.btn-primary:hover {
+  background: #7c3aed;
+}
+
+.input-text {
+  width: 93%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #6a0dad;
+  background: #0b0f1a;
+  color: white;
+  font-size: 14px;
+}
+
+.input-text::placeholder {
+  color: #b19cd9;
+}
+
+.correo-cuadro {
+    background-color: #1c1c1c;
+    color: #ffffff;
+    padding: 15px;
+    border-radius: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    margin-top: 10px;
+    font-family: monospace;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}

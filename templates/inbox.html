@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bandeja de Netflix - {{ destinatario }}</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="fondo-oscuro">
+<div style="display:flex; height:90vh;">
+
+  <!-- Bandeja lateral -->
+  <div id="bandeja" style="width:300px; overflow:auto; background:#222; color:#fff; padding:10px;">
+    <h3>Bandeja de {{ destinatario }}</h3>
+    {% for correo in bandeja %}
+      <div style="padding:5px; border-bottom:1px solid #444; cursor:pointer;" onclick="mostrarCorreo({{ loop.index0 }})">
+        <strong>{{ correo.remitente }}</strong><br>{{ correo.asunto }}
+      </div>
+    {% endfor %}
+    <hr>
+    <button onclick="window.location.href='/'" class="btn-primary" style="width:100%;">Volver</button>
+  </div>
+
+  <!-- Panel principal -->
+  <div id="contenido" style="flex:1; padding:20px; background:#1c1c1c; color:#fff; overflow:auto;">
+    <p>Selecciona un correo para ver su contenido completo...</p>
+  </div>
+
+</div>
+
+<script>
+  const bandeja = {{ bandeja|tojson }};
+  function mostrarCorreo(index){
+    const correo = bandeja[index];
+    document.getElementById("contenido").innerHTML = correo.html || "<p>No hay contenido disponible</p>";
+  }
+</script>
+</body>
+</html>

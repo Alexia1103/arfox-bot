@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Seleccionar Plataforma</title>
+</head>
+<body style="background:#1c1c1c; color:#fff; font-family:sans-serif; text-align:center; padding:20px;">
+  <h2>Hola {{ usuario.nombre }} 👋</h2>
+  <p>Selecciona la plataforma de soporte:</p>
+  {% for plat in usuario.plataformas %}
+    <a href="{{ url_for('abrir_inbox', plataforma=plat) }}">
+      <button style="margin:5px; padding:10px 20px;">{{ plat }}</button>
+    </a>
+  {% endfor %}
+</body>
+</html>
