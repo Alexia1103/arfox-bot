@@ -10,17 +10,25 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 def obtener_servicio_gmail():
     creds = None
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    # Cargar token desde variable de entorno
+    token_json = os.environ.get("GMAIL_TOKEN_JSON")
+    if token_json:
+        creds = Credentials.from_authorized_user_info(json.loads(token_json), SCOPES)
 
+    # Cargar credenciales desde variable de entorno si no hay token
     if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+        creds_env = os.environ.get("GMAIL_CREDENTIALS_JSON")
+        if creds_env:
+            flow = InstalledAppFlow.from_client_secrets_info(
+                json.loads(creds_env), SCOPES
+            )
             creds = flow.run_local_server(port=0)
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
+
+        # Si refresca, se puede guardar de nuevo (opcional)
+        if creds and creds.valid:
+            token_data = creds.to_json()
+            # En local podrías guardar a un archivo si quieres
+            # with open("token.json","w") as f: f.write(token_data)
 
     service = build("gmail", "v1", credentials=creds)
     return service
