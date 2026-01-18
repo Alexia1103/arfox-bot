@@ -13,19 +13,24 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 def obtener_servicio_gmail():
     creds = None
 
-    # Cargar token desde variable de entorno
     token_json = os.environ.get("GMAIL_TOKEN_JSON")
+
     if token_json:
         creds = Credentials.from_authorized_user_info(json.loads(token_json), SCOPES)
 
-    # Si no hay token válido, usar credenciales de entorno
+    # 👉 Si el token expiró, intentamos refrescarlo
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+
     if not creds or not creds.valid:
-        creds_env = os.environ.get("GMAIL_CREDENTIALS_JSON")
-        if creds_env:
-            raise Exception("No hay token válido en Render. Usa GMAIL_TOKEN_JSON.")
+        raise Exception(
+            "No hay credenciales válidas en Render. "
+            "Debes generar GMAIL_TOKEN_JSON con refresh_token."
+        )
 
     service = build("gmail", "v1", credentials=creds)
     return service
+
 
 
 def obtener_correos_netflix(destinatario):
