@@ -1,144 +1,182 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bandeja de Netflix - {{ destinatario }}</title>
-<link rel="stylesheet" href="/static/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bandeja de Netflix - {{ destinatario }}</title>
 
-<style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-  }
+  <link rel="stylesheet" href="/static/styles.css">
 
-  .layout {
-    display: flex;
-    height: 90vh;
-  }
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f0f0f;
+      color: white;
+    }
 
-  /* BANDEJA LATERAL */
-  #bandeja {
-    width: 320px;
-    overflow-y: auto;
-    background: #121212;
-    color: white;
-    padding: 10px;
-    border-right: 1px solid #333;
-  }
+    .layout {
+      display: flex;
+      height: 90vh;
+    }
 
-  .correo-item {
-    padding: 10px;
-    margin-bottom: 8px;
-    border-radius: 8px;
-    background: #1e1e1e;
-    border: 1px solid #333;
-    cursor: pointer;
-    transition: 0.3s;
-  }
+    /* ===== BANDEJA LATERAL ===== */
+    #bandeja {
+      width: 320px;
+      overflow-y: auto;
+      background: #121212;
+      padding: 10px;
+      border-right: 1px solid #333;
+    }
 
-  .correo-item:hover {
-    background: #2a2a2a;
-    transform: scale(1.02);
-  }
+    .header-bandeja {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-  .correo-nuevo {
-    border-left: 5px solid #00ff99;
-  }
+    .correo-item {
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      cursor: pointer;
+      transition: 0.3s;
+    }
 
-  .asunto {
-    color: #ccc;
-    font-size: 14px;
-  }
+    .correo-item:hover {
+      background: #2a2a2a;
+    }
 
-  .click-aqui {
-    font-size: 12px;
-    color: #00b3ff;
-    margin-top: 5px;
-  }
+    .correo-nuevo {
+      border-left: 5px solid #00ff99;
+    }
 
-  /* PANEL PRINCIPAL */
-  #contenido {
-    flex: 1;
-    padding: 20px;
-    background: #0f0f0f;
-    color: white;
-    overflow-y: auto;
-  }
+    .asunto {
+      color: #ccc;
+      font-size: 14px;
+    }
 
-  .header-bandeja {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+    .click-aqui {
+      font-size: 12px;
+      color: #00b3ff;
+      margin-top: 5px;
+    }
 
-  .btn-volver {
-    background: #ff4444;
-    color: white;
-    border: none;
-    padding: 8px;
-    border-radius: 6px;
-    cursor: pointer;
-  }
+    /* ===== PANEL PRINCIPAL ===== */
+    #contenido {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
 
-  .btn-volver:hover {
-    background: #cc0000;
-  }
-</style>
+    .btn-volver {
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
+    .btn-volver:hover {
+      background: #cc0000;
+    }
+
+    /* ===== RESPONSIVE MOBILE ===== */
+    @media (max-width: 768px) {
+      .layout {
+        flex-direction: column;
+        height: auto;
+      }
+
+      #bandeja {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #333;
+      }
+
+      #contenido {
+        display: none;
+        padding: 15px;
+      }
+    }
+  </style>
 </head>
-<body class="fondo-oscuro">
+
+<body>
 
 <div class="layout">
 
-  <!-- Bandeja lateral -->
+  <!-- ===== BANDEJA ===== -->
   <div id="bandeja">
-
     <div class="header-bandeja">
       <h3>Bandeja de {{ destinatario }}</h3>
-      <button onclick="window.location.href='/'" class="btn-volver">Volver</button>
+      <button class="btn-volver" onclick="window.location.href='/'">Volver</button>
     </div>
 
     <hr style="border-color:#333;">
 
-    {% for correo in bandeja %}
-      <div 
-        class="correo-item {% if loop.index0 < 3 %}correo-nuevo{% endif %}"
-        onclick="mostrarCorreo({{ loop.index0 }})"
-      >
-        <strong>{{ correo.remitente }}</strong><br>
-        <span class="asunto">{{ correo.asunto }}</span>
+    {% if bandeja %}
+      {% for correo in bandeja %}
+        <div
+          class="correo-item {% if loop.index0 < 3 %}correo-nuevo{% endif %}"
+          onclick="mostrarCorreo({{ loop.index0 }})"
+        >
+          <strong>{{ correo.remitente }}</strong><br>
+          <span class="asunto">{{ correo.asunto }}</span>
 
-        <div class="click-aqui">
-          👉 Haz clic para ver el mensaje
+          <div class="click-aqui">
+            👉 Haz clic para ver el mensaje
+          </div>
         </div>
-      </div>
-    {% endfor %}
-
+      {% endfor %}
+    {% else %}
+      <p>No hay correos nuevos</p>
+    {% endif %}
   </div>
 
-  <!-- Panel principal -->
+  <!-- ===== CONTENIDO ===== -->
   <div id="contenido">
     <h2>Vista previa del correo</h2>
-    <p>Selecciona un correo para ver su contenido completo...</p>
+    <p>Selecciona un correo para ver su contenido completo…</p>
   </div>
 
 </div>
 
 <script>
-  const bandeja = {{ bandeja|tojson }};
+  /* Guardamos la bandeja en window para evitar conflictos */
+  window.bandeja = {{ bandeja | tojson }};
+  const esMovil = window.innerWidth <= 768;
 
-  function mostrarCorreo(index){
-    const correo = bandeja[index];
+  function mostrarCorreo(index) {
+    const correo = window.bandeja[index];
+    const contenido = document.getElementById("contenido");
 
-    document.getElementById("contenido").innerHTML = `
+    contenido.innerHTML = `
+      <button class="btn-volver" onclick="volverABandeja()">⬅ Volver</button>
       <h2>${correo.asunto || "Sin asunto"}</h2>
       <p><strong>De:</strong> ${correo.remitente}</p>
       <hr>
-      <div style="background:#111; padding:15px; border-radius:8px;">
-        ${correo.html || "<p>No hay contenido disponible</p>"}
+      <div id="correo-html"
+           style="background:#111; padding:15px; border-radius:8px;">
       </div>
     `;
+
+    /* Insertamos el HTML del correo de forma segura */
+    const contenedorHtml = document.getElementById("correo-html");
+    contenedorHtml.innerHTML = correo.html || "<p>No hay contenido disponible</p>";
+
+    if (esMovil) {
+      document.getElementById("bandeja").style.display = "none";
+      contenido.style.display = "block";
+    }
+  }
+
+  function volverABandeja() {
+    document.getElementById("contenido").style.display = "none";
+    document.getElementById("bandeja").style.display = "block";
   }
 </script>
 
