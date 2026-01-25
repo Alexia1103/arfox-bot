@@ -1,81 +1,60 @@
 import os
-import json
-import base64
 import re
+from imapclient import IMAPClient
+import pyzmail
 from datetime import datetime
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
 
-SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
-
-
-def obtener_servicio_gmail():
-    creds = None
-
-    token_json = os.environ.get("GMAIL_TOKEN_JSON")
-
-    if token_json:
-        creds = Credentials.from_authorized_user_info(json.loads(token_json), SCOPES)
-
-    # 👉 Si el token expiró, intentamos refrescarlo
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-
-    if not creds or not creds.valid:
-        raise Exception(
-            "No hay credenciales válidas en Render. "
-            "Debes generar GMAIL_TOKEN_JSON con refresh_token."
-        )
-
-    service = build("gmail", "v1", credentials=creds)
-    return service
-
+IMAP_HOST = "imap.gmail.com"
 
 
 def obtener_correos_netflix(destinatario):
-    service = obtener_servicio_gmail()
-    hoy = datetime.now().strftime("%Y/%m/%d")
-    query = f"from:@netflix.com to:{destinatario} after:{hoy}"
-
-    resultados = service.users().messages().list(
-        userId="me",
-        q=query,
-        maxResults=20
-    ).execute()
-
-    mensajes = resultados.get("messages", [])
     bandeja = []
 
-    for msg in mensajes:
-        mensaje = service.users().messages().get(
-            userId="me",
-            id=msg["id"],
-            format="full"
-        ).execute()
+    with IMAPClient(IMAP_HOST, ssl=True) as server:
+        server.login(
+            os.getenv("EMAIL_USER"),
+            os.getenv("EMAIL_APP_PASSWORD")
+        )
 
-        payload = mensaje.get("payload", {})
-        headers = payload.get("headers", [])
-        subject = next((h["value"] for h in headers if h["name"]=="Subject"), "")
-        from_email = next((h["value"] for h in headers if h["name"]=="From"), "")
+        server.select_folder("INBOX")
 
-        cuerpo = ""
-        if "parts" in payload:
-            for part in payload["parts"]:
-                if part["mimeType"] == "text/html" and "data" in part["body"]:
-                    cuerpo = base64.urlsafe_b64decode(part["body"]["data"]).decode("utf-8")
-        else:
-            cuerpo = base64.urlsafe_b64decode(payload.get("body", {}).get("data", b"")).decode("utf-8")
+        # solo correos no leídos de Netflix
+        mensajes = server.search([
+            "UNSEEN",
+            "FROM", "@netflix.com",
+            "TO", destinatario
+        ])
 
-        match = re.search(r"\b\d{6}\b", cuerpo)
-        codigo = match.group(0) if match else None
+        for uid, data in server.fetch(mensajes, ["RFC822"]).items():
+            msg = pyzmail.PyzMessage.factory(data[b"RFC822"])
 
-        bandeja.append({
-            "id": msg["id"],
-            "remitente": from_email,
-            "asunto": subject,
-            "html": cuerpo,
-            "codigo": codigo
-        })
+            subject = msg.get_subject() or ""
+            from_email = msg.get_addresses("from")[0][1] if msg.get_addresses("from") else ""
+
+            cuerpo = ""
+            if msg.html_part:
+                cuerpo = msg.html_part.get_payload().decode(
+                    msg.html_part.charset or "utf-8",
+                    errors="ignore"
+                )
+            elif msg.text_part:
+                cuerpo = msg.text_part.get_payload().decode(
+                    msg.text_part.charset or "utf-8",
+                    errors="ignore"
+                )
+
+            match = re.search(r"\b\d{6}\b", cuerpo)
+            codigo = match.group(0) if match else None
+
+            bandeja.append({
+                "remitente": from_email,
+                "asunto": subject,
+                "html": cuerpo,
+                "codigo": codigo
+            })
+
+            # marcar como leído
+            server.add_flags(uid, [b"\\Seen"])
 
     return bandeja
+
